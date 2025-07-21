@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/aks-mcp/internal/components/compute"
 	"github.com/Azure/aks-mcp/internal/components/detectors"
 	"github.com/Azure/aks-mcp/internal/components/fleet"
+	"github.com/Azure/aks-mcp/internal/components/inspektorgadget"
 	"github.com/Azure/aks-mcp/internal/components/monitor"
 	"github.com/Azure/aks-mcp/internal/components/monitor/diagnostics"
 	"github.com/Azure/aks-mcp/internal/components/network"
@@ -345,6 +346,12 @@ func (s *Service) registerKubernetesTools() {
 		ciliumExecutor := k8s.WrapK8sExecutor(cilium.NewExecutor())
 		s.mcpServer.AddTool(ciliumTool, tools.CreateToolHandler(ciliumExecutor, s.cfg))
 	}
+
+	// Register Inspektor Gadget tools for observability
+	if s.cfg.AdditionalTools["inspektor-gadget"] {
+		log.Println("Registering Kubernetes tool: inspektor-gadget")
+		s.registerInspektorGadgetTools()
+	}
 }
 
 // registerKubectlCommands registers kubectl commands based on access level
@@ -378,5 +385,83 @@ func (s *Service) registerKubectlCommands() {
 			wrappedExecutor := k8s.WrapK8sExecutorFunc(k8sExecutor)
 			s.mcpServer.AddTool(kubectlTool, tools.CreateToolHandler(wrappedExecutor, s.cfg))
 		}
+	}
+}
+
+// registerInspektorGadgetTools registers all Inspektor Gadget tools for observability
+func (s *Service) registerInspektorGadgetTools() {
+	gadgetMgr, err := inspektorgadget.NewGadgetManager()
+	if err != nil {
+		log.Printf("Warning: Failed to create gadget manager: %v", err)
+		return
+	}
+
+	// Register Inspektor Gadget observes DNS tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_observe_dns")
+	inspektorGadgetRun := inspektorgadget.RegisterInspektorGadgetObserveDNSTool()
+	s.mcpServer.AddTool(inspektorGadgetRun, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetObserveDNSHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget observes TCP tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_observe_tcp")
+	inspektorGadgetTCP := inspektorgadget.RegisterInspektorGadgetObserveTCPTool()
+	s.mcpServer.AddTool(inspektorGadgetTCP, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetObserveTCPHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget observes file open tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_observe_file_open")
+	inspektorGadgetFileOpen := inspektorgadget.RegisterInspektorGadgetObserveFileOpenTool()
+	s.mcpServer.AddTool(inspektorGadgetFileOpen, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetObserveFileOpenHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget observes process execution tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_observe_process_execution")
+	inspektorGadgetProcessExec := inspektorgadget.RegisterInspektorGadgetObserveProcessExecutionTool()
+	s.mcpServer.AddTool(inspektorGadgetProcessExec, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetObserveProcessExecutionHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget observes signal tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_observe_signal")
+	inspektorGadgetSignal := inspektorgadget.RegisterInspektorGadgetObserveSignalTool()
+	s.mcpServer.AddTool(inspektorGadgetSignal, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetObserveSignalHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget observes system calls tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_observe_system_calls")
+	inspektorGadgetSystemCalls := inspektorgadget.RegisterInspektorGadgetObserveSystemCallsTool()
+	s.mcpServer.AddTool(inspektorGadgetSystemCalls, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetObserveSystemCallHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget top file tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_top_file")
+	inspektorGadgetTopFile := inspektorgadget.RegisterInspektorGadgetTopFileTool()
+	s.mcpServer.AddTool(inspektorGadgetTopFile, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetTopFileHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget top TCP tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_top_tcp")
+	inspektorGadgetTopTCP := inspektorgadget.RegisterInspektorGadgetTopTCPTool()
+	s.mcpServer.AddTool(inspektorGadgetTopTCP, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetTopTCPHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget get gadget results tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_get_gadget_results")
+	inspektorGadgetGetResults := inspektorgadget.RegisterInspektorGadgetGetGadgetResultsTool()
+	s.mcpServer.AddTool(inspektorGadgetGetResults, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetGetGadgetResultsHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget stop gadget tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_stop_gadget")
+	inspektorGadgetStop := inspektorgadget.RegisterInspektorGadgetStopGadgetTool()
+	s.mcpServer.AddTool(inspektorGadgetStop, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetStopGadgetHandler(gadgetMgr, s.cfg), s.cfg))
+
+	// Register Inspektor Gadget list gadgets tool
+	log.Println("Registering inspektor-gadget tool: inspektor_gadget_list_gadgets")
+	inspektorGadgetList := inspektorgadget.RegisterInspektorGadgetListGadgetsTool()
+	s.mcpServer.AddTool(inspektorGadgetList, tools.CreateResourceHandler(inspektorgadget.InspektorGadgetListGadgetsHandler(gadgetMgr, s.cfg), s.cfg))
+
+	if s.cfg.AccessLevel == "readwrite" || s.cfg.AccessLevel == "admin" {
+		// Register Inspektor Gadget deploy tool
+		log.Println("Registering inspektor-gadget tool: inspektor_gadget_deploy")
+		inspektorGadgetDeploy := inspektorgadget.RegisterInspektorGadgetDeployTool()
+		inspektorGadgetExecutor := k8s.WrapK8sExecutor(inspektorgadget.InspektorGadgetDeployExecutor(gadgetMgr))
+		s.mcpServer.AddTool(inspektorGadgetDeploy, tools.CreateToolHandler(inspektorGadgetExecutor, s.cfg))
+
+		// Register Inspektor Gadget undeploy tool
+		log.Println("Registering inspektor-gadget tool: inspektor_gadget_undeploy")
+		inspektorGadgetUndeploy := inspektorgadget.RegisterInspektorGadgetUndeployTool()
+		inspektorGadgetUndeployExecutor := k8s.WrapK8sExecutorFunc(inspektorgadget.InspektorGadgetUndeployExecutor)
+		s.mcpServer.AddTool(inspektorGadgetUndeploy, tools.CreateToolHandler(inspektorGadgetUndeployExecutor, s.cfg))
 	}
 }

@@ -293,6 +293,22 @@ The AKS-MCP server provides the following tools for interacting with AKS cluster
 **Additional Tools (Optional):**
 - `helm`: Helm package manager for Kubernetes (requires `--additional-tools helm`)
 - `cilium`: Cilium CLI for eBPF-based networking and security (requires `--additional-tools cilium`)
+- `inspektor-gadget`: Inspektor Gadget tools for real-time debugging of Kubernetes clusters (requires `--additional-tools inspektor-gadget`)
+
+**inspektor-gadget Tools: (Read-Only)**
+- `inspektor_gadget_observe_dns` - Observe DNS in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_observe_file_open` - Observe File being opened in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_observe_process_execution` - Observe process executions in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `mcp_aks_inspektor_gadget_observe_signal` - Observe signals in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_observe_system_calls` - Observe system_calls in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_observe_tcp` - Observe TCP traffic in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_top_file` - Top file access in Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_top_tcp` - Top TCP traffic Kubernetes workloads (requires `--additional-tools inspektor-gadget`)
+
+**inspektor-gadget Tools: (Read-Write/Admin)**
+- `inspektor_gadget_deploy` - Deploy an Inspektor Gadget to a Kubernetes cluster (requires `--additional-tools inspektor-gadget`)
+- `inspektor_gadget_undeploy` - Undeploy an Inspektor Gadget from a Kubernetes cluster (requires `--additional-tools inspektor-gadget`)
+
 </details>
 
 <details>
