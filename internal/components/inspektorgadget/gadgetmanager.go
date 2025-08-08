@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/inspektor-gadget/inspektor-gadget/pkg/datasource"
@@ -63,7 +64,9 @@ func NewGadgetManager() GadgetManager {
 	return &manager{}
 }
 
-type manager struct{}
+type manager struct {
+	formatterMu sync.Mutex
+}
 
 // RunGadget runs a gadget with the specified image and parameters for a given duration
 func (g *manager) RunGadget(ctx context.Context, image string, params map[string]string, duration time.Duration) (string, error) {
@@ -72,7 +75,7 @@ func (g *manager) RunGadget(ctx context.Context, image string, params map[string
 		ctx,
 		image,
 		gadgetcontext.WithDataOperators(
-			outputDataOperator(func(data []byte) {
+			g.outputDataOperator(func(data []byte) {
 				results.Write(data)
 				results.WriteByte('\n')
 			}),
@@ -107,7 +110,7 @@ func truncateResults(results string, latest bool) string {
 	return fmt.Sprintf("\n<isTruncated>true</isTruncated>\n<results>%s</results>\n", truncated)
 }
 
-func outputDataOperator(cb func(data []byte)) operators.DataOperator {
+func (g *manager) outputDataOperator(cb func(data []byte)) operators.DataOperator {
 	const opPriority = 50000
 	return simple.New("outputDataOperator",
 		simple.OnInit(func(gadgetCtx operators.GadgetContext) error {
@@ -124,6 +127,8 @@ func outputDataOperator(cb func(data []byte)) operators.DataOperator {
 				}
 
 				err := d.Subscribe(func(source datasource.DataSource, data datasource.Data) error {
+					g.formatterMu.Lock()
+					defer g.formatterMu.Unlock()
 					jsonData := jsonFormatter.Marshal(data)
 					cb(jsonData)
 					return nil
@@ -198,7 +203,7 @@ func (g *manager) GetResults(ctx context.Context, id string) (string, error) {
 		to,
 		id,
 		gadgetcontext.WithDataOperators(
-			outputDataOperator(func(data []byte) {
+			g.outputDataOperator(func(data []byte) {
 				results.Write(data)
 				results.WriteByte('\n')
 			}),
